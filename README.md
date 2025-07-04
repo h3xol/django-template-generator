@@ -1,67 +1,89 @@
-# Django Template Generator 
 
-Un mic generator de proiecte Django, construit cu Flask, care îți permite să:
-
-- Creezi un proiect Django nou  
-- Selectezi pachete Python adiționale (pip) pentru instalare  
-- Specifici aplicații Django (`startapp`) pe care vrei să le generezi  
-- Definești fusul orar în `settings.py`  
-- Primești un log în timp real (SSE) despre stadiul creării proiectului  
-- Primești la final două scripturi helper (`start.sh`, `start.bat`) pentru a porni serverul  
 
 ---
 
-## Funcționalități
+# 🚀 Django Template Generator
 
-1. **Interfață web**: completezi nume proiect, bifezi pachete, introduci aplicațiile dorite, alegi fusul orar.  
-2. **Streaming de console**: vezi live pașii de creare (folder, venv, pip install, django-admin, injectare setări, crearea app-urilor).  
-3. **Injectare automată**: pachetele care corespund unor Django apps și aplicațiile tale apar în `INSTALLED_APPS`.  
-4. **Helper scripts**: `start.sh` și `start.bat` configurate automat pentru a porni proiectul în mediul virtual.
+Un mic generator de proiecte **Django**, construit cu **Flask**, care îți permite să:
 
----
-
-## Precondiții
-
-- Python 3.8+  
-- `git`, `pip`  
+* ✅ Creezi un proiect Django nou
+* 📦 Selectezi pachete Python adiționale (`pip`) pentru instalare
+* 🧩 Specifici aplicații Django (`startapp`)
+* 🌍 Definești fusul orar în `settings.py`
+* 🔄 Primești un **log în timp real (SSE)** despre stadiul creării proiectului
+* 🛠️ Primești două scripturi helper (`start.sh`, `start.bat`) pentru a porni serverul
 
 ---
 
-## Instalare
+## 🧠 Funcționalități
 
-1. Clonează acest repo:
-   ```bash
-   git clone https://github.com/h3xol/django-template-generator.git 
+1. **Interfață web prietenoasă** – completezi nume proiect, bifezi pachete, introduci aplicațiile dorite, alegi fusul orar.
+2. **Streaming live din consolă** – vezi în timp real pașii de creare (folder, venv, pip install, django-admin, etc).
+3. **Injectare automată** – pachetele și aplicațiile apar în `INSTALLED_APPS`.
+4. **Scripturi helper generate** – `start.sh` și `start.bat` sunt configurate automat pentru pornirea proiectului în mediul virtual.
 
-2. Instalează dependențele:
+---
 
-```bash pip install -r requirements.txt ```
+## ⚙️ Precondiții
 
-### Structura proiectului
+Asigură-te că ai instalat:
 
+* Python **3.8+**
+* `git` și `pip`
+
+---
+
+## 💾 Instalare
+
+Clonează repo-ul:
+
+```bash
+git clone https://github.com/h3xol/django-template-generator.git
+```
+
+Instalează dependențele:
+
+```bash
+pip install -r requirements.txt
+```
+
+---
+
+## 🗂️ Structura proiectului
+
+```
 project-root/
-
 ├── app.py
-
 ├── requirements.txt
-
-├── generated_projects/       # Aici se vor crea proiectele tale Django
-
+├── generated_projects/       # Aici se vor crea proiectele Django
 └── templates/
-    
     └── index2.html           # Interfața web
+```
 
-### Utilizare
+---
+
+## ▶️ Utilizare
 
 1. Pornește serverul Flask:
-  ```bash python app.py ```
+
+```bash
+python app.py
+```
 
 2. Deschide în browser:
 
- ```bash http://localhost:5000 ```
+```
+http://localhost:5000
+```
 
-3. Completează formularul
+3. Completează formularul și generează proiectul Django!
 
+---
 
-### Made by h.s
+## ✍️ Author
 
+**Made by [h.s](https://github.com/h3xol)**
+
+---
+
+Let me know if you want a version in English too, or if you'd like badges, screenshots, or deployment instructions added.
