@@ -86,4 +86,3 @@ http://localhost:5000
 
 ---
 
-Let me know if you want a version in English too, or if you'd like badges, screenshots, or deployment instructions added.
