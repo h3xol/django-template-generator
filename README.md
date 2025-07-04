@@ -31,8 +31,7 @@ Un mic generator de proiecte Django, construit cu Flask, care îți permite să:
 
 1. Clonează acest repo:
    ```bash
-   git clone https://github.com/utilizator/django-flask-scaffolder.git
-   cd django-flask-scaffolder
+   git clone https://github.com/h3xol/django-template-generator.git
 
 2. Instalează dependențele:
 
