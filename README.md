@@ -41,9 +41,13 @@ pip install -r requirements.txt
 ### Structura proiectului
 
 project-root/
+
 ├── app.py
+
 ├── requirements.txt
+
 ├── generated_projects/       # Aici se vor crea proiectele tale Django
+
 └── templates/
     └── index2.html           # Interfața web
 
@@ -59,5 +63,5 @@ project-root/
 3. Completează formularul
 
 
-### Made by sebi
+### Made by h.s
 
