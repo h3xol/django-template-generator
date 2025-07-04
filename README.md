@@ -31,11 +31,11 @@ Un mic generator de proiecte Django, construit cu Flask, care îți permite să:
 
 1. Clonează acest repo:
    ```bash
-   git clone https://github.com/h3xol/django-template-generator.git
+   git clone https://github.com/h3xol/django-template-generator.git 
 
 2. Instalează dependențele:
 
-pip install -r requirements.txt
+```bash pip install -r requirements.txt ```
 
 ### Structura proiectului
 
@@ -48,16 +48,17 @@ project-root/
 ├── generated_projects/       # Aici se vor crea proiectele tale Django
 
 └── templates/
+    
     └── index2.html           # Interfața web
 
 ### Utilizare
 
 1. Pornește serverul Flask:
- - python app.py
+  ```bash python app.py ```
 
 2. Deschide în browser:
 
- - http://localhost:5000
+ ```bash http://localhost:5000 ```
 
 3. Completează formularul
 
