@@ -111,11 +111,7 @@ project-root/
 
 ---
 
-## ✍️ Author
-
-**Made by [h.s](https://github.com/h3xol)**
-
-# 🚀 [RO] Django Template Generator
+# 🚀 [EN] Django Template Generator
 
 Un mic generator de proiecte **Django**, construit cu **Flask**, care îți permite să:
 
@@ -164,4 +160,57 @@ Clonează repo-ul:
 ```bash
 git clone https://github.com/h3xol/django-template-generator.git
 cd django-template-generator
+````
+
+Instalează dependențele:
+
+```bash
+pip install -r requirements.txt
+```
+
+---
+
+## 🗂️ Structura proiectului
+
+```
+project-root/
+├── app.py
+├── requirements.txt
+├── generated_projects/       # Aici se vor crea proiectele Django
+└── templates/
+    └── index2.html           # Interfața web
+```
+
+---
+
+## ▶️ Utilizare
+
+1. Pornește serverul Flask:
+
+   ```bash
+   python app.py
+   ```
+
+2. Deschide în browser:
+
+   ```
+   http://localhost:5000
+   ```
+
+3. Completează formularul (inclusiv superuser dacă vrei) și generează proiectul Django!
+
+4. La final vei avea în `generated_projects/<nume>/`:
+
+   * un proiect Django complet
+   * aplicațiile specificate
+   * `venv` cu toate pachetele instalate
+   * scripturile `start.sh` / `start.bat`
+   * baza de date migrată și, dacă ai cerut, un superuser creat
+
+---
+
+## ✍️ Author
+
+**Made by [h.s](https://github.com/h3xol)**
+
 
