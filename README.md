@@ -240,12 +240,11 @@ project-root/
 ├── requirements.txt
 ├── generated_projects/       # Aici se vor crea proiectele Django
 └── templates/
-    └── index2.html           # Interfața web
+    └── index.html           # Interfața web
 ```
 
 ---
 
-=======
 
 ## ▶️ Utilizare
 
