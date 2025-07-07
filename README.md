@@ -58,7 +58,7 @@ A lightweight **Django** project generator built with **Flask** that enables you
 ---
 
 ## 💾 Installation
-=======
+
 Un mic generator de proiecte **Django**, construit cu **Flask**, care îți permite să:
 
 * ✅ Creezi un proiect Django nou  
@@ -113,7 +113,7 @@ cd django-template-generator
 ---
 
 ## 🗂️ Project Structure
-=======
+
 Instalează dependențele:
 
 ```bash
@@ -132,7 +132,6 @@ project-root/
 ├── generated_projects/    # Newly generated Django projects go here
 └── templates/
     └── index.html        # The web UI template
-=======
 ├── generated_projects/       # Aici se vor crea proiectele Django
 └── templates/
 
