@@ -111,7 +111,7 @@ project-root/
 
 ---
 
-# 🚀 [EN] Django Template Generator
+# 🚀 [RO] Django Template Generator
 
 Un mic generator de proiecte **Django**, construit cu **Flask**, care îți permite să:
 
