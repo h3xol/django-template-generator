@@ -5,25 +5,112 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Django Template Generator</title>
   <style>
-    body { font-family: Arial, sans-serif; max-width: 800px; margin: 50px auto; padding: 20px; }
-    .form-group { margin-bottom: 15px; }
-    label { display: block; margin-bottom: 5px; font-weight: bold; }
-    input[type="text"], input[type="email"], input[type="password"], select {
-      width: 100%; padding: 8px; border: 1px solid #ddd; border-radius: 4px;
+    /* Base dark theme */
+    body {
+      background: #121212;
+      color: #e0e0e0;
+      font-family: Arial, sans-serif;
+      max-width: 800px;
+      margin: 50px auto;
+      padding: 20px;
     }
-    .checkbox-group { display: grid; grid-template-columns: repeat(auto-fit, minmax(200px,1fr)); gap: 10px; margin: 10px 0; }
-    .checkbox-item { display: flex; align-items: center; }
-    .checkbox-item input { margin-right: 8px; }
-    button { background: #007cba; color: #fff; padding: 12px 24px; border: none; border-radius: 4px; cursor: pointer; font-size: 16px; }
-    button:hover { background: #005a87; }
-    .flash-messages { margin-bottom: 20px; }
-    .flash-success { background: #d4edda; color: #155724; padding: 10px; border-radius: 4px; margin-bottom: 10px; }
-    .flash-error   { background: #f8d7da; color: #721c24; padding: 10px; border-radius: 4px; margin-bottom: 10px; }
+    h1 {
+      color: #ffffff;
+      text-align: center;
+      margin-bottom: 1em;
+    }
 
+    /* Form fields */
+    .form-group {
+      margin-bottom: 15px;
+    }
+    label {
+      display: block;
+      margin-bottom: 5px;
+      font-weight: bold;
+      color: #ccc;
+    }
+    input[type="text"],
+    input[type="email"],
+    input[type="password"],
+    select {
+      width: 100%;
+      padding: 8px;
+      border: 1px solid #333;
+      border-radius: 4px;
+      background: #1e1e1e;
+      color: #e0e0e0;
+    }
+    input[type="text"]::placeholder,
+    input[type="email"]::placeholder,
+    input[type="password"]::placeholder {
+      color: #555;
+    }
+
+    /* Checkbox layout */
+    .checkbox-group {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(200px,1fr));
+      gap: 10px;
+      margin: 10px 0;
+    }
+    .checkbox-item {
+      display: flex;
+      align-items: center;
+      color: #ccc;
+    }
+    .checkbox-item input {
+      margin-right: 8px;
+    }
+
+    /* Fieldset */
+    fieldset {
+      border: 1px solid #333;
+      padding: 10px;
+      border-radius: 4px;
+      margin-bottom: 15px;
+      background: #1e1e1e;
+    }
+    legend {
+      color: #ccc;
+      font-weight: bold;
+    }
+
+    /* Button */
+    button {
+      background: #2979ff;
+      color: #fff;
+      padding: 12px 24px;
+      border: none;
+      border-radius: 4px;
+      cursor: pointer;
+      font-size: 16px;
+    }
+    button:hover {
+      background: #5393ff;
+    }
+
+    /* Flash messages */
+    .flash-messages .flash-success {
+      background: #2e7d32;
+      color: #c8e6c9;
+      padding: 10px;
+      border-radius: 4px;
+      margin-bottom: 10px;
+    }
+    .flash-messages .flash-error {
+      background: #c62828;
+      color: #ffcdd2;
+      padding: 10px;
+      border-radius: 4px;
+      margin-bottom: 10px;
+    }
+
+    /* Console area */
     #console-container {
       display: none;
       background: #1e1e1e;
-      color: #dcdcdc;
+      color: #e0e0e0;
       font-family: monospace;
       padding: 15px;
       border-radius: 4px;
@@ -31,11 +118,15 @@
       height: 300px;
       overflow-y: auto;
       white-space: pre-wrap;
+      border: 1px solid #333;
     }
     #console-header {
       font-weight: bold;
       margin-bottom: 10px;
       color: #ffffff;
+    }
+    #console-output {
+      color: #e0e0e0;
     }
   </style>
 </head>
@@ -60,7 +151,8 @@
 
     <div class="form-group">
       <label>
-        <input type="checkbox" name="install_django" checked> Instalează Django
+        <input type="checkbox" name="install_django" checked>
+        Instalează Django
       </label>
     </div>
 
@@ -79,7 +171,7 @@
     <div class="form-group">
       <label for="apps">Creează Django apps (comma-sep):</label>
       <input type="text" id="apps" name="apps" placeholder="ex: blog,login,test">
-      <small>Separă prin virgulă numele aplicațiilor Django.</small>
+      <small style="color:#777;">Separă prin virgulă numele aplicațiilor Django.</small>
     </div>
 
     <div class="form-group">
@@ -91,7 +183,6 @@
       </select>
     </div>
 
-    <!-- Superuser fields -->
     <fieldset class="form-group">
       <legend>Superuser (opțional)</legend>
       <div class="form-group">
@@ -136,8 +227,6 @@
           .forEach(cb => params.append('packages', cb.value));
       params.append('apps',     form.apps.value);
       params.append('timezone', form.timezone.value);
-
-      // superuser params
       params.append('su_username', form.su_username.value);
       params.append('su_email',    form.su_email.value);
       params.append('su_password', form.su_password.value);
