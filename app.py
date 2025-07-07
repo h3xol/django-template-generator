@@ -46,8 +46,7 @@ APP_NAME_MAP = {
 }
 
 BASE_DIR      = os.path.dirname(os.path.abspath(__file__))
-PROJECTS_ROOT = os.path.join(BASE_DIR, "generated_projects")
-os.makedirs(PROJECTS_ROOT, exist_ok=True)
+
 
 SSE_HEADERS = {
     "Content-Type":      "text/event-stream",
@@ -178,6 +177,8 @@ def index():
 @app.route('/stream_create')
 def stream_create():
     # Gather & sanitize inputs
+    PROJECTS_ROOT = os.path.join(BASE_DIR, "generated_projects")
+    os.makedirs(PROJECTS_ROOT, exist_ok=True)
     raw_name      = request.args.get('project_name', '')
     project_name  = secure_filename(raw_name.strip())
     if not project_name:
