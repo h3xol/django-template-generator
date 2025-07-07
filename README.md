@@ -1,3 +1,5 @@
+![image](https://github.com/user-attachments/assets/997e3766-b74c-48b5-a001-287cdb532d44)
+
 # 🚀 [EN] Django Template Generator
 
 A lightweight **Django** project generator built with **Flask** that enables you to:
