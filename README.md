@@ -2,7 +2,6 @@
 
 # 🚀 [EN] Django Template Generator
 
-<<<<<<< HEAD
 A lightweight **Django** project generator built with **Flask** that enables you to:
 
 - ✅ Create a brand-new Django project  
@@ -103,14 +102,14 @@ Asigură-te că ai:
 ## 💾 Instalare
 
 Clonează repo-ul:
->>>>>>> 5950a5a (version 2.0)
+
 
 ```bash
 git clone https://github.com/h3xol/django-template-generator.git
 cd django-template-generator
 ````
 
-<<<<<<< HEAD
+
 ---
 
 ## 🗂️ Project Structure
@@ -124,26 +123,23 @@ pip install -r requirements.txt
 ---
 
 ## 🗂️ Structura proiectului
->>>>>>> 5950a5a (version 2.0)
+
 
 ```
 project-root/
 ├── app.py
 ├── requirements.txt
-<<<<<<< HEAD
 ├── generated_projects/    # Newly generated Django projects go here
 └── templates/
-    └── index2.html        # The web UI template
+    └── index.html        # The web UI template
 =======
 ├── generated_projects/       # Aici se vor crea proiectele Django
 └── templates/
-    └── index2.html           # Interfața web
->>>>>>> 5950a5a (version 2.0)
+
 ```
 
 ---
 
-<<<<<<< HEAD
 ## ▶️ Usage
 
 1. Start the Flask server:
@@ -250,7 +246,7 @@ project-root/
 ---
 
 =======
->>>>>>> 5950a5a (version 2.0)
+
 ## ▶️ Utilizare
 
 1. Pornește serverul Flask:
