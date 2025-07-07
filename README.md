@@ -1,5 +1,108 @@
+# 🚀 [EN] Django Template Generator
 
-# 🚀 Django Template Generator
+A small **Django** project generator built with **Flask** that lets you:
+
+* ✅ Create a new Django project  
+* 📦 Select extra Python packages (`pip`) to install  
+* 🧩 Specify Django apps to scaffold (`startapp`)  
+* 🌍 Set the `TIME_ZONE` in `settings.py` (validated with `zoneinfo`)  
+* 🔄 Receive a **live console log (SSE)** of every generation step  
+* ⚙️ Automatically apply **migrations** (`manage.py migrate`)  
+* 🚀 Optionally create a **superuser** (`createsuperuser --noinput`)  
+* 🛡️ Inject a small launcher into `manage.py` so it always runs under your venv’s Python  
+* 📌 Inject the venv’s `site-packages` into `sys.path` even if you accidentally run with system Python  
+* 🔄 Auto-enable Django if you request apps or superuser credentials  
+* 🔍 Verify that each third-party module actually imports before injecting it  
+* 🛠️ Generate helper scripts (`start.sh`, `start.bat`) to activate the venv and run `manage.py runserver`
+
+---
+
+## 🧠 Features
+
+1. **Friendly Web UI** – fill in your project name, check the packages you want, list the apps to create, pick a timezone, and optionally supply superuser credentials.  
+2. **Live Streaming Console** – watch real-time updates as folders, virtualenvs, pip installs, Django scaffolding, migrations, and superuser creation happen.  
+3. **Timezone Validation** – only accepts valid `zoneinfo` names; falls back to UTC if you enter something invalid.  
+4. **Venv Launcher** – prepends a snippet to `manage.py` so it re-executes itself under the venv’s Python interpreter.  
+5. **Site-Packages Hack** – prepends a snippet to `settings.py` that ensures your venv’s site-packages directory is on `sys.path`, even under system Python.  
+6. **Module Import Checks** – before injecting into `INSTALLED_APPS`, each package is tested with a quick `import`, and only valid ones are added.  
+7. **Automatic Migrations** – after scaffolding, runs `manage.py migrate` and streams the output so you don’t have to.  
+8. **Superuser Creation** – if you supply a username, email, and password, runs `createsuperuser --noinput` before migrations to seed your admin account.  
+9. **Helper Scripts** – two convenience scripts (`start.sh` for Linux/macOS, `start.bat` for Windows) to activate the venv and launch `runserver`.
+
+---
+
+## ⚙️ Requirements
+
+Make sure you have:
+
+* Python **3.8+** (3.12 recommended)  
+* `git` and `pip`  
+
+---
+
+## 💾 Installation
+
+1. Clone the repository:
+   ```bash
+   git clone https://github.com/h3xol/django-template-generator.git
+   cd django-template-generator
+````
+
+2. Install dependencies:
+
+   ```bash
+   pip install -r requirements.txt
+   ```
+
+---
+
+## 🗂️ Project Structure
+
+```
+project-root/
+├── app.py
+├── requirements.txt
+├── generated_projects/       # Django projects will be created here
+└── templates/
+    └── index2.html           # The web UI template
+```
+
+---
+
+## ▶️ Usage
+
+1. Start the Flask server:
+
+   ```bash
+   python app.py
+   ```
+2. Open your browser to:
+
+   ```
+   http://localhost:5000
+   ```
+3. Fill out the form (project name, packages, apps, timezone, optional superuser) and hit **Creează proiect**.
+4. Watch the live log; when it finishes, you’ll find your new Django project in `generated_projects/<your-project-name>/` with:
+
+   * A fully scaffolded Django project
+   * Any apps you requested
+   * A virtualenv with all selected packages installed
+   * Helper scripts `start.sh` / `start.bat`
+   * Database migrations applied
+   * (Optional) Superuser account created
+
+---
+
+## ✍️ Author
+
+**Made by [h.s](https://github.com/h3xol)**
+
+```
+
+
+
+
+# 🚀  [RO] Django Template Generator
 
 Un mic generator de proiecte **Django**, construit cu **Flask**, care îți permite să:
 
@@ -102,4 +205,4 @@ project-root/
 **Made by [h.s](https://github.com/h3xol)**
 
 ```
-```
+
