@@ -5,8 +5,12 @@ import subprocess
 import logging
 import re
 import pytz
+from zoneinfo import available_timezones
 
-from flask import Flask, render_template, request, flash, redirect, url_for, Response
+from flask import (
+    Flask, render_template, request,
+    flash, redirect, url_for, Response
+)
 from werkzeug.utils import secure_filename
 
 # -----------------------------------------------------------------------------
@@ -54,10 +58,61 @@ SSE_HEADERS = {
 def get_venv_bin_dir():
     return "Scripts" if os.name == "nt" else "bin"
 
-def inject_timezone(settings_path: str, timezone: str):
-    """Insert or replace TIME_ZONE in settings.py."""
+def inject_manage_py_launcher(manage_py_path: str, bin_dir: str):
+    python_exe_name = 'python.exe' if os.name == 'nt' else 'python'
+    launcher = f"""# ── VENV LAUNCHER ──
+import os, sys
+_proj = os.path.dirname(os.path.abspath(__file__))
+_venv_py = os.path.join(_proj, 'venv', '{bin_dir}', '{python_exe_name}')
+if os.path.exists(_venv_py) and os.path.abspath(sys.executable) != os.path.abspath(_venv_py):
+    os.execv(_venv_py, [_venv_py] + sys.argv)
+# ────────────────────────
+
+"""
+    content = open(manage_py_path, 'r', encoding='utf-8').read()
+    if "VENV LAUNCHER" not in content:
+        with open(manage_py_path, 'w', encoding='utf-8') as f:
+            f.write(launcher + content)
+        try:
+            os.chmod(manage_py_path, 0o755)
+        except OSError:
+            pass
+        logger.info("Injected venv launcher into %s", manage_py_path)
+
+def inject_venv_site_hack(settings_path: str):
     try:
-        content = open(settings_path, encoding='utf-8').read()
+        content = open(settings_path, 'r', encoding='utf-8').read()
+    except FileNotFoundError:
+        logger.error("settings.py not found at %s", settings_path)
+        return
+
+    hack = f"""# ── VENV SITE-PACKAGES HACK ──
+import os, sys
+_proj = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
+_venv = os.path.join(_proj, 'venv')
+if os.name == 'nt':
+    _lib = os.path.join('Scripts', 'Lib', 'site-packages')
+else:
+    _lib = os.path.join('lib', f"python{{sys.version_info.major}}.{{sys.version_info.minor}}", 'site-packages')
+_site = os.path.join(_venv, _lib)
+if os.path.isdir(_site) and _site not in sys.path:
+    sys.path.insert(0, _site)
+# ───────────────────────────────────
+
+"""
+    if "VENV SITE-PACKAGES HACK" not in content:
+        with open(settings_path, 'w', encoding='utf-8') as f:
+            f.write(hack + content)
+        logger.info("Injected venv site-packages hack into %s", settings_path)
+
+def inject_timezone(settings_path: str, timezone: str):
+    """Insert or replace TIME_ZONE in settings.py, validate via zoneinfo."""
+    if timezone not in available_timezones():
+        logger.warning("Invalid TIME_ZONE '%s', falling back to UTC", timezone)
+        timezone = 'UTC'
+
+    try:
+        content = open(settings_path, 'r', encoding='utf-8').read()
     except FileNotFoundError:
         logger.error("settings.py not found at %s", settings_path)
         return
@@ -70,13 +125,14 @@ def inject_timezone(settings_path: str, timezone: str):
     else:
         content = tz_line + "\n" + content
 
-    open(settings_path, 'w', encoding='utf-8').write(content)
+    with open(settings_path, 'w', encoding='utf-8') as f:
+        f.write(content)
     logger.info("Set TIME_ZONE to %s in %s", timezone, settings_path)
 
 def inject_apps_into_settings(settings_path: str, apps: list):
     """Append missing apps to INSTALLED_APPS in settings.py."""
     try:
-        content = open(settings_path, encoding='utf-8').read()
+        content = open(settings_path, 'r', encoding='utf-8').read()
     except FileNotFoundError:
         logger.error("settings.py not found at %s", settings_path)
         return
@@ -100,36 +156,11 @@ def inject_apps_into_settings(settings_path: str, apps: list):
     new_inner   = inner + "".join(additions)
     new_block   = pre + new_inner + post
     new_content = content[:match.start()] + new_block + content[match.end():]
-    open(settings_path, 'w', encoding='utf-8').write(new_content)
+
+    with open(settings_path, 'w', encoding='utf-8') as f:
+        f.write(new_content)
     logger.info("Injected %d app(s) into INSTALLED_APPS", len(additions))
 
-def inject_venv_site_hack(settings_path: str):
-    """
-    At the top of settings.py, insert sys.path logic so that
-    the project’s own venv/lib/pythonX.Y/site-packages
-    is always on sys.path—no matter which Python runs manage.py.
-    """
-    try:
-        content = open(settings_path, encoding='utf-8').read()
-    except FileNotFoundError:
-        logger.error("settings.py not found at %s", settings_path)
-        return
-
-    hack = f"""# ── VENV SITE-PACKAGES HACK ──
-import os, sys
-_proj = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
-_venv = os.path.join(_proj, 'venv')
-_lib = 'Lib/site-packages' if os.name=='nt' else f'lib/python{{sys.version_info.major}}.{{sys.version_info.minor}}/site-packages'
-_site = os.path.join(_venv, _lib)
-if os.path.isdir(_site) and _site not in sys.path:
-    sys.path.insert(0, _site)
-# ────────────────────────────────
-
-"""
-    # only inject once
-    if "VENV SITE-PACKAGES HACK" not in content:
-        open(settings_path, 'w', encoding='utf-8').write(hack + content)
-        logger.info("Injected venv-site hack into %s", settings_path)
 
 # -----------------------------------------------------------------------------
 # Routes
@@ -138,14 +169,15 @@ if os.path.isdir(_site) and _site not in sys.path:
 @app.route('/')
 def index():
     return render_template(
-        'index2.html',
+        'index.html',
         packages=list(APP_NAME_MAP.keys()),
-        timezones=pytz.common_timezones
+        timezones=sorted(available_timezones())
     )
+
 
 @app.route('/stream_create')
 def stream_create():
-    # 1) Gather & sanitize inputs
+    # Gather & sanitize inputs
     raw_name      = request.args.get('project_name', '')
     project_name  = secure_filename(raw_name.strip())
     if not project_name:
@@ -156,33 +188,40 @@ def stream_create():
 
     install_django = request.args.get('install_django') == 'on'
     selected_pkgs  = [p for p in request.args.getlist('packages') if p in APP_NAME_MAP]
+    tz             = request.args.get('timezone', 'UTC')
 
-    tz = request.args.get('timezone', 'UTC')
-    if tz not in pytz.common_timezones:
-        tz = 'UTC'
-
-    raw_apps = request.args.get('apps', '')
-    user_apps = [
+    raw_apps       = request.args.get('apps', '')
+    user_apps      = [
         nm for nm in (
             secure_filename(x.strip()) for x in raw_apps.split(',')
         ) if nm and nm.isidentifier()
     ]
 
-    # 2) Prepare paths & commands
+    # superuser creds (optional)
+    su_username = request.args.get('su_username', '').strip()
+    su_email    = request.args.get('su_email', '').strip()
+    su_password = request.args.get('su_password', '').strip()
+
+    # auto-enable Django if needed
+    if (user_apps or su_username) and not install_django:
+        install_django = True
+
+    # Prepare paths & executables
     target_dir    = os.path.join(PROJECTS_ROOT, project_name)
     venv_dir      = os.path.join(target_dir, 'venv')
     bin_dir       = get_venv_bin_dir()
-    pip_pkgs      = (['django'] if install_django else []) + selected_pkgs
-    pip_exe       = os.path.join(venv_dir, bin_dir, 'pip') + ('.exe' if os.name=='nt' else '')
-    django_admin  = os.path.join(venv_dir, bin_dir, 'django-admin') + ('.exe' if os.name=='nt' else '')
-    python_exe    = os.path.join(venv_dir, bin_dir, 'python')
+    python_exe    = os.path.join(venv_dir, bin_dir, 'python' + ('.exe' if os.name=='nt' else ''))
+    pip_exe       = os.path.join(venv_dir, bin_dir, 'pip' + ('.exe' if os.name=='nt' else ''))
+    django_admin  = os.path.join(venv_dir, bin_dir, 'django-admin' + ('.exe' if os.name=='nt' else ''))
     settings_rel  = os.path.join(project_name, 'settings.py')
     settings_path = os.path.join(target_dir, settings_rel)
+
+    pip_pkgs = (['django'] if install_django else []) + selected_pkgs
 
     def generate():
         valid_third = []
 
-        # a) mkdir
+        # Create project folder
         yield f"data: 📁 Creare folder `{project_name}`...\n\n"
         try:
             os.makedirs(target_dir, exist_ok=False)
@@ -192,7 +231,7 @@ def stream_create():
             yield "event: done\ndata: error\n\n"
             return
 
-        # b) venv
+        # Create virtualenv
         yield "data: 🐍 Creare venv...\n\n"
         try:
             subprocess.check_call(
@@ -205,7 +244,7 @@ def stream_create():
             yield "event: done\ndata: error\n\n"
             return
 
-        # c) pip install
+        # Install pip packages
         if pip_pkgs:
             yield f"data: 📦 Instalare pachete: {', '.join(pip_pkgs)}...\n\n"
             proc = subprocess.Popen(
@@ -213,16 +252,16 @@ def stream_create():
                 stdout=subprocess.PIPE, stderr=subprocess.STDOUT,
                 text=True, bufsize=1
             )
-            for ln in proc.stdout:
-                yield f"data: {ln.rstrip()}\n\n"
+            for line in proc.stdout:
+                yield f"data: {line.rstrip()}\n\n"
             if proc.wait() != 0:
                 yield f"data: ❌ pip install exit code {proc.returncode}\n\n"
                 yield "event: done\ndata: error\n\n"
                 return
             yield "data: ✔ Pachete instalate.\n\n"
 
-            # c1) verify imports
-            yield "data: 🔍 Verific module importabile…\n\n"
+            # Verify third-party modules
+            yield "data: 🔍 Verificare module importabile…\n\n"
             for pkg in selected_pkgs:
                 label = APP_NAME_MAP[pkg]
                 if not label:
@@ -233,11 +272,11 @@ def stream_create():
                 ).returncode == 0
                 if ok:
                     valid_third.append(label)
-                    yield f"data: ✔ '{label}' importabil.\n\n"
+                    yield f"data: ✔ Modul '{label}' importabil.\n\n"
                 else:
-                    yield f"data: ⚠️ '{label}' nu găsit; omis.\n\n"
+                    yield f"data: ⚠️ Modul '{label}' nu găsit; omis.\n\n"
 
-        # d) django-admin startproject + edits
+        # Create & configure Django project
         if install_django:
             yield "data: 🔧 Creare proiect Django...\n\n"
             proc = subprocess.Popen(
@@ -245,85 +284,141 @@ def stream_create():
                 stdout=subprocess.PIPE, stderr=subprocess.STDOUT,
                 text=True, bufsize=1
             )
-            for ln in proc.stdout:
-                yield f"data: {ln.rstrip()}\n\n"
+            for line in proc.stdout:
+                yield f"data: {line.rstrip()}\n\n"
             if proc.wait() != 0:
                 yield f"data: ❌ django-admin exit code {proc.returncode}\n\n"
                 yield "event: done\ndata: error\n\n"
                 return
             yield "data: ✔ Proiect creat.\n\n"
 
-            # inject the venv-site hack *before* INSTALLED_APPS is ever used
-            inject_venv_site_hack(settings_path)
-            yield "data: ✔ Venv-site hack injectat în settings.py\n\n"
+            # Inject manage.py launcher
+            manage_py = os.path.join(target_dir, 'manage.py')
+            inject_manage_py_launcher(manage_py, bin_dir)
+            yield "data: ✔ manage.py actualizat să folosească venv python\n\n"
 
-            # ensure settings.py present
+            # Inject site-packages hack
+            inject_venv_site_hack(settings_path)
+            yield "data: ✔ Venv site-packages hack injectat în settings.py\n\n"
+
+            # Ensure settings.py exists
             if not os.path.isfile(settings_path):
                 yield f"data: ❌ Lipsește {settings_rel}\n\n"
                 yield "event: done\ndata: error\n\n"
                 return
 
-            # inject only verified third-party
+            # Inject third-party apps
             if valid_third:
                 yield "data: ✍️ Injectare third-party apps...\n\n"
                 inject_apps_into_settings(settings_path, valid_third)
-                yield "data: ✔ Injectate.\n\n"
+                yield "data: ✔ Third-party apps injectate.\n\n"
 
-            # timezone
-            yield f"data: 🌐 Set fus orar '{tz}'...\n\n"
+            # Inject timezone
+            yield f"data: 🌐 Setare fus orar '{tz}'...\n\n"
             inject_timezone(settings_path, tz)
-            yield "data: ✔ TIME_ZONE.\n\n"
+            yield "data: ✔ TIME_ZONE setat.\n\n"
 
-            # user apps
+            # Create user apps
             if user_apps:
-                yield f"data: 📦 Creeare apps: {', '.join(user_apps)}...\n\n"
+                yield f"data: 📦 Creare apps: {', '.join(user_apps)}...\n\n"
                 for nm in user_apps:
-                    yield f"data: 🔍 Conflict '{nm}'…\n\n"
+                    yield f"data: 🔍 Verific conflict pentru '{nm}'…\n\n"
                     if subprocess.run(
                         [python_exe, '-c', f'import {nm}'],
                         cwd=target_dir,
                         stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL
                     ).returncode == 0:
-                        yield f"data: ⚠️ '{nm}' există; omis.\n\n"
+                        yield f"data: ⚠️ '{nm}' există ca modul; omis.\n\n"
                         continue
 
                     proc = subprocess.Popen(
-                        [python_exe, os.path.join(target_dir,'manage.py'),'startapp',nm],
-                        cwd=target_dir, stdout=subprocess.PIPE,
-                        stderr=subprocess.STDOUT, text=True, bufsize=1
+                        [python_exe, os.path.join(target_dir, 'manage.py'), 'startapp', nm],
+                        cwd=target_dir, stdout=subprocess.PIPE, stderr=subprocess.STDOUT,
+                        text=True, bufsize=1
                     )
-                    for ln in proc.stdout:
-                        yield f"data: {ln.rstrip()}\n\n"
+                    for line in proc.stdout:
+                        yield f"data: {line.rstrip()}\n\n"
                     if proc.wait() != 0:
-                        yield f"data: ⚠️ Creare '{nm}' eșuat; omis.\n\n"
+                        yield f"data: ⚠️ Creare app '{nm}' eșuat; omis.\n\n"
                         continue
 
                     yield f"data: ✔ App '{nm}' creat.\n\n"
-                    yield f"data: ✍️ Inject '{nm}'…\n\n"
+                    yield f"data: ✍️ Injectare '{nm}' în INSTALLED_APPS...\n\n"
                     inject_apps_into_settings(settings_path, [nm])
-                    yield f"data: ✔ '{nm}' injectat.\n\n"
+                    yield f"data: ✔ '{nm}' adăugat.\n\n"
 
-            # helper scripts
+            # Generate helper scripts
             yield "data: ⚙️ Generare start.sh & start.bat...\n\n"
-            sh = os.path.join(target_dir, 'start.sh')
-            open(sh,'w',encoding='utf-8').write(
-                "#!/usr/bin/env bash\n"
-                "cd \"$(dirname \"$0\")\"\n"
-                f"source venv/{bin_dir}/activate\n"
-                "python manage.py runserver\n"
-            )
-            try: os.chmod(sh,0o755)
-            except: pass
+            start_sh = os.path.join(target_dir, 'start.sh')
+            with open(start_sh, 'w', encoding='utf-8') as f:
+                f.write(f"""#!/usr/bin/env bash
+cd "$(dirname "$0")"
+source venv/{bin_dir}/activate
+python manage.py runserver
+""")
+            try: os.chmod(start_sh, 0o755)
+            except OSError: pass
 
-            bt = os.path.join(target_dir,'start.bat')
-            open(bt,'w',encoding='utf-8').write(
-                "@echo off\ncd /d %~dp0\n"
-                f"call venv\\{bin_dir}\\activate.bat\n"
-                "python manage.py runserver\n"
-            )
-            yield "data: ✔ Helper scripts.\n\n"
+            start_bat = os.path.join(target_dir, 'start.bat')
+            with open(start_bat, 'w', encoding='utf-8') as f:
+                f.write(f"""@echo off
+cd /d %~dp0
+call venv\\{bin_dir}\\activate.bat
+python manage.py runserver
+""")
+            yield "data: ✔ Helper scripts create.\n\n"
 
-        # e) Done
+            # Apply migrations
+            yield "data: 🚜 Aplicare migrări Django...\n\n"
+            migrate_cmd = [
+                python_exe,
+                os.path.join(target_dir, 'manage.py'),
+                'migrate'
+            ]
+            proc = subprocess.Popen(
+                migrate_cmd,
+                cwd=target_dir,
+                stdout=subprocess.PIPE, stderr=subprocess.STDOUT,
+                text=True, bufsize=1
+            )
+            for line in proc.stdout:
+                yield f"data: {line.rstrip()}\n\n"
+            if proc.wait() != 0:
+                yield f"data: ❌ migrate exit code {proc.returncode}\n\n"
+                yield "event: done\ndata: error\n\n"
+                return
+            yield "data: ✔ Migrări aplicate.\n\n"
+
+            # Create superuser (after migrations)
+            if su_username:
+                yield "data: 🚀 Creare superuser…\n\n"
+                env = os.environ.copy()
+                env.update({
+                    'DJANGO_SUPERUSER_USERNAME': su_username,
+                    'DJANGO_SUPERUSER_EMAIL':    su_email or 'admin@example.com',
+                    'DJANGO_SUPERUSER_PASSWORD': su_password or 'admin',
+                })
+                cmd = [
+                    python_exe,
+                    os.path.join(target_dir, 'manage.py'),
+                    'createsuperuser',
+                    '--noinput'
+                ]
+                proc = subprocess.Popen(
+                    cmd,
+                    cwd=target_dir,
+                    env=env,
+                    stdout=subprocess.PIPE, stderr=subprocess.STDOUT,
+                    text=True, bufsize=1
+                )
+                for line in proc.stdout:
+                    yield f"data: {line.rstrip()}\n\n"
+                if proc.wait() != 0:
+                    yield f"data: ❌ Superuser exit code {proc.returncode}\n\n"
+                else:
+                    yield "data: ✔ Superuser creat.\n\n"
+
+        # final done
         yield "event: done\ndata: success\n\n"
 
     return Response(generate(), headers=SSE_HEADERS)
